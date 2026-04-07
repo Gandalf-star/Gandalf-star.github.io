@@ -1,0 +1,8 @@
+﻿Analyzing panel_admin_click...                                  
+
+   info - Statements in an if should be enclosed in a block - lib\dashboard_principal.dart:518:52 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\dashboard_principal.dart:519:56 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\dashboard_principal.dart:520:57 - curly_braces_in_flow_control_structures
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\main.dart:29:11 - deprecated_member_use
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\main.dart:45:20 - argument_type_not_assignable
+
