@@ -440,16 +440,42 @@ class _DetalleAlertaPanel extends StatelessWidget {
                       ),
                       if (data['uid'] != null)
                         StreamBuilder(
-                          stream: dbRef.child('usuarios').child(data['uid']).onValue,
+                          stream: dbRef
+                              .child('usuarios')
+                              .child(data['uid'])
+                              .onValue,
                           builder: (context, userSnapshot) {
-                            if (!userSnapshot.hasData || userSnapshot.data!.snapshot.value == null) {
+                            if (!userSnapshot.hasData ||
+                                userSnapshot.data!.snapshot.value == null) {
                               return const SizedBox();
                             }
-                            final userData = Map<String, dynamic>.from(userSnapshot.data!.snapshot.value as Map);
-                            final telefono = userData['telefono']?.toString() ?? 'N/A';
-                            final cedula = userData['cedula']?.toString() ?? userData['documento']?.toString() ?? 'N/A';
-                            final fotoPerfil = userData['fotoPerfil']?.toString() ?? '';
-                            final infoVehiculo = userData['infoVehiculo'] is Map ? Map<String, dynamic>.from(userData['infoVehiculo']) : null;
+                            final userData = Map<String, dynamic>.from(
+                                userSnapshot.data!.snapshot.value as Map);
+                            final telefono =
+                                userData['telefono']?.toString() ?? 'N/A';
+                            final correo = userData['correo']?.toString() ??
+                                userData['email']?.toString() ??
+                                'N/A';
+                            final cedula = userData['cedula']?.toString() ??
+                                userData['documento']?.toString() ??
+                                'N/A';
+                            final fotoPerfil =
+                                userData['fotoPerfil']?.toString() ??
+                                    userData['fotoUrl']?.toString() ??
+                                    '';
+                            final infoVehiculo = userData['infoVehiculo'] is Map
+                                ? Map<String, dynamic>.from(
+                                    userData['infoVehiculo'])
+                                : null;
+
+                            // Extraer fecha de registro para pasajero
+                            String fechaTexto = 'No disponible';
+                            if (userData['fechaRegistro'] != null) {
+                              final fecha = DateTime.fromMillisecondsSinceEpoch(
+                                  userData['fechaRegistro'] as int);
+                              fechaTexto =
+                                  '${fecha.day}/${fecha.month}/${fecha.year}';
+                            }
 
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,38 +488,55 @@ class _DetalleAlertaPanel extends StatelessWidget {
                                       height: 100,
                                       margin: const EdgeInsets.only(bottom: 24),
                                       decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.redAccent, width: 3),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.redAccent.withValues(alpha: 0.2),
-                                            blurRadius: 15,
-                                            spreadRadius: 2,
-                                          )
-                                        ]
-                                      ),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: Colors.redAccent,
+                                              width: 3),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.redAccent
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 15,
+                                              spreadRadius: 2,
+                                            )
+                                          ]),
                                       child: ClipOval(
-                                        child: UniversalImage(url: fotoPerfil, fit: BoxFit.cover, width: 100, height: 100),
+                                        child: UniversalImage(
+                                            url: fotoPerfil,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100),
                                       ),
                                     ),
                                   ),
                                 _InfoSection(
-                                  title: 'DATOS DE CONTACTO E ID',
+                                  title: 'DATOS PERSONALES Y CONTACTO',
                                   icon: Icons.contact_phone,
                                   children: [
                                     _DetailRow('Teléfono', telefono),
-                                    _DetailRow('Cédula / Doc', cedula),
+                                    _DetailRow('Correo', correo),
+                                    if ((data['rol'] == 'pasajero' ||
+                                        data['rol'] == 'Pasajero'))
+                                      _DetailRow('Fecha Registro', fechaTexto),
+                                    if ((data['rol'] == 'conductor' ||
+                                        data['rol'] == 'Conductor'))
+                                      _DetailRow('Cédula / Doc', cedula),
                                   ],
                                 ),
-                                if ((data['rol'] == 'conductor' || data['rol'] == 'Conductor') && infoVehiculo != null) ...[
+                                if ((data['rol'] == 'conductor' ||
+                                        data['rol'] == 'Conductor') &&
+                                    infoVehiculo != null) ...[
                                   const SizedBox(height: 32),
                                   _InfoSection(
                                     title: 'INFORMACIÓN DEL VEHÍCULO',
                                     icon: Icons.directions_car,
                                     children: [
-                                      _DetailRow('Placa', infoVehiculo['placa']?.toString()),
-                                      _DetailRow('Marca / Modelo', '${infoVehiculo['marca'] ?? ''} ${infoVehiculo['modelo'] ?? ''}'),
-                                      _DetailRow('Color', infoVehiculo['color']?.toString()),
+                                      _DetailRow('Placa',
+                                          infoVehiculo['placa']?.toString()),
+                                      _DetailRow('Marca / Modelo',
+                                          '${infoVehiculo['marca'] ?? ''} ${infoVehiculo['modelo'] ?? ''}'),
+                                      _DetailRow('Color',
+                                          infoVehiculo['color']?.toString()),
                                     ],
                                   ),
                                 ],
