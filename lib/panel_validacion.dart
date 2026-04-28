@@ -46,7 +46,22 @@ class _PanelValidacionState extends State<PanelValidacion> {
                 final datos = entry.value;
                 final rol = (datos['rol'] ?? '').toString();
                 if (rol != 'conductor') return false;
-                final estado = datos['estadoValidacion'] ?? 'pendiente';
+                
+                // Prioridad: usar estadoConductor.aprobado, fallback a estadoValidacion
+                final estadoConductor = datos['estadoConductor'] as Map?;
+                final aprobado = estadoConductor?['aprobado'] ?? false;
+                final estadoValidacion = datos['estadoValidacion'] ?? 'pendiente';
+                
+                // Determinar estado basado en aprobado
+                String estado;
+                if (aprobado == true) {
+                  estado = 'aprobado';
+                } else if (estadoValidacion == 'rechazado') {
+                  estado = 'rechazado';
+                } else {
+                  estado = 'pendiente';
+                }
+                
                 if (_filtro != 'todos' && estado != _filtro) return false;
 
                 if (_busqueda.isNotEmpty) {

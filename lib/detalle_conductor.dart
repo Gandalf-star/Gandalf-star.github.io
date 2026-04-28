@@ -28,7 +28,15 @@ class _DetalleConductorState extends State<DetalleConductor> {
     final rawInfoVehiculo = widget.datos['infoVehiculo'];
     final infoVehiculo = rawInfoVehiculo is Map ? Map<String, dynamic>.from(rawInfoVehiculo) : null;
     final cat = infoVehiculo?['categoria']?.toString().toLowerCase() ?? 'economico';
-    _categoriaSeleccionada = (cat == 'pendiente' || cat == 'n/a' || cat == 'n/A') ? 'economico' : cat;
+    
+    // Normalizar categoría a valores válidos: economico, confort
+    if (cat == 'pendiente' || cat == 'n/a' || cat == 'n/A' || cat.isEmpty) {
+      _categoriaSeleccionada = 'economico';
+    } else if (cat == 'confort' || cat == 'estándar' || cat == 'estandar' || cat == 'standard') {
+      _categoriaSeleccionada = 'confort';
+    } else {
+      _categoriaSeleccionada = 'economico'; // Default
+    }
   }
 
   void _verImagenAgrandada(String url) {
@@ -108,15 +116,26 @@ class _DetalleConductorState extends State<DetalleConductor> {
 
     setState(() => _cargando = true);
     try {
+      // Copiar datos de perfil si no existen
+      final datosPerfil = <String, dynamic>{};
+      if (widget.datos['nombre'] != null) datosPerfil['nombre'] = widget.datos['nombre'];
+      if (widget.datos['fotoPerfil'] != null) datosPerfil['fotoPerfil'] = widget.datos['fotoPerfil'];
+      if (widget.datos['email'] != null) datosPerfil['email'] = widget.datos['email'];
+      if (widget.datos['telefono'] != null) datosPerfil['telefono'] = widget.datos['telefono'];
+
       await _dbRef.child('usuarios').child(widget.uid).update({
         'estadoValidacion': nuevoEstado,
         'fechaValidacion': ServerValue.timestamp,
         'infoVehiculo/categoria': _categoriaSeleccionada,
+        'estadoConductor/aprobado': nuevoEstado == 'aprobado',
+        'estadoConductor/ultimaConexion': ServerValue.timestamp,
+        ...datosPerfil,
       });
 
       await _dbRef.child('conductores').child(widget.uid).update({
         'estadoValidacion': nuevoEstado,
         'categoria': _categoriaSeleccionada?.toLowerCase(),
+        'aprobado': nuevoEstado == 'aprobado',
       });
 
       if (mounted) {
@@ -151,16 +170,19 @@ class _DetalleConductorState extends State<DetalleConductor> {
     try {
       await _dbRef.child('usuarios').child(widget.uid).update({
         'infoVehiculo/categoria': _categoriaSeleccionada,
+        'categoria': _categoriaSeleccionada?.toLowerCase(),
       });
       await _dbRef.child('conductores').child(widget.uid).update({
         'categoria': _categoriaSeleccionada?.toLowerCase(),
+        'infoVehiculo/categoria': _categoriaSeleccionada,
       });
 
       if (mounted) {
+        String categoriaDisplay = _categoriaSeleccionada == 'economico' ? 'Económico' : 'Confort';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Categoría actualizada a ${_categoriaSeleccionada == 'economico' ? 'Económico' : 'Confort'}',
+              'Categoría actualizada a $categoriaDisplay',
               style: GoogleFonts.inter(color: Colors.white),
             ),
             backgroundColor: const Color(0xFF3b82f6),

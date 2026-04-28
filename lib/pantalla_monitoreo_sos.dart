@@ -441,7 +441,10 @@ class _DetalleAlertaPanel extends StatelessWidget {
                       if (data['uid'] != null)
                         StreamBuilder(
                           stream: dbRef
-                              .child('usuarios')
+                              .child((data['rol'] == 'pasajero' ||
+                                      data['rol'] == 'Pasajero')
+                                  ? 'pasajeros'
+                                  : 'usuarios')
                               .child(data['uid'])
                               .onValue,
                           builder: (context, userSnapshot) {
@@ -459,6 +462,8 @@ class _DetalleAlertaPanel extends StatelessWidget {
                             final cedula = userData['cedula']?.toString() ??
                                 userData['documento']?.toString() ??
                                 'N/A';
+                            final direccion =
+                                userData['direccion']?.toString() ?? 'N/A';
                             final fotoPerfil =
                                 userData['fotoPerfil']?.toString() ??
                                     userData['fotoUrl']?.toString() ??
@@ -515,12 +520,11 @@ class _DetalleAlertaPanel extends StatelessWidget {
                                   children: [
                                     _DetailRow('Teléfono', telefono),
                                     _DetailRow('Correo', correo),
+                                    _DetailRow('Dirección', direccion),
+                                    _DetailRow('Cédula / Doc', cedula),
                                     if ((data['rol'] == 'pasajero' ||
                                         data['rol'] == 'Pasajero'))
                                       _DetailRow('Fecha Registro', fechaTexto),
-                                    if ((data['rol'] == 'conductor' ||
-                                        data['rol'] == 'Conductor'))
-                                      _DetailRow('Cédula / Doc', cedula),
                                   ],
                                 ),
                                 if ((data['rol'] == 'conductor' ||
