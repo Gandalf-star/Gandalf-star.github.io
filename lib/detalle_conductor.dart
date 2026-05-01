@@ -123,20 +123,24 @@ class _DetalleConductorState extends State<DetalleConductor> {
       if (widget.datos['email'] != null) datosPerfil['email'] = widget.datos['email'];
       if (widget.datos['telefono'] != null) datosPerfil['telefono'] = widget.datos['telefono'];
 
-      await _dbRef.child('usuarios').child(widget.uid).update({
-        'estadoValidacion': nuevoEstado,
-        'fechaValidacion': ServerValue.timestamp,
-        'infoVehiculo/categoria': _categoriaSeleccionada,
-        'estadoConductor/aprobado': nuevoEstado == 'aprobado',
-        'estadoConductor/ultimaConexion': ServerValue.timestamp,
-        ...datosPerfil,
-      });
+      // Actualización atómica de ambos nodos para consistencia
+      final updates = <String, dynamic>{
+        // Nodo usuarios
+        'usuarios/${widget.uid}/estadoValidacion': nuevoEstado,
+        'usuarios/${widget.uid}/fechaValidacion': ServerValue.timestamp,
+        'usuarios/${widget.uid}/infoVehiculo/categoria': _categoriaSeleccionada,
+        'usuarios/${widget.uid}/categoria': _categoriaSeleccionada?.toLowerCase(),
+        'usuarios/${widget.uid}/estadoConductor/aprobado': nuevoEstado == 'aprobado',
+        'usuarios/${widget.uid}/estadoConductor/ultimaConexion': ServerValue.timestamp,
+        ...datosPerfil.map((key, value) => 'usuarios/${widget.uid}/$key': value),
+        
+        // Nodo conductores
+        'conductores/${widget.uid}/estadoValidacion': nuevoEstado,
+        'conductores/${widget.uid}/categoria': _categoriaSeleccionada?.toLowerCase(),
+        'conductores/${widget.uid}/aprobado': nuevoEstado == 'aprobado',
+      };
 
-      await _dbRef.child('conductores').child(widget.uid).update({
-        'estadoValidacion': nuevoEstado,
-        'categoria': _categoriaSeleccionada?.toLowerCase(),
-        'aprobado': nuevoEstado == 'aprobado',
-      });
+      await _dbRef.update(updates);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,45 +169,46 @@ class _DetalleConductorState extends State<DetalleConductor> {
     }
   }
 
-  Future<void> _guardarCategoria() async {
+  Future<void> _actualizarCategoria() async {
+    if (_categoriaSeleccionada == widget.datos['infoVehiculo']?['categoria']) {
+      return;
+    }
+
     setState(() => _cargando = true);
     try {
-      await _dbRef.child('usuarios').child(widget.uid).update({
-        'infoVehiculo/categoria': _categoriaSeleccionada,
-        'categoria': _categoriaSeleccionada?.toLowerCase(),
-      });
-      await _dbRef.child('conductores').child(widget.uid).update({
-        'categoria': _categoriaSeleccionada?.toLowerCase(),
-        'infoVehiculo/categoria': _categoriaSeleccionada,
-      });
+      // Actualización atómica de ambos nodos para consistencia
+      final updates = <String, dynamic>{
+        // Nodo usuarios
+        'usuarios/${widget.uid}/infoVehiculo/categoria': _categoriaSeleccionada,
+        'usuarios/${widget.uid}/categoria': _categoriaSeleccionada?.toLowerCase(),
+        // Nodo conductores
+        'conductores/${widget.uid}/categoria': _categoriaSeleccionada?.toLowerCase(),
+        'conductores/${widget.uid}/infoVehiculo/categoria': _categoriaSeleccionada,
+      };
 
-      if (mounted) {
-        String categoriaDisplay = _categoriaSeleccionada == 'economico' ? 'Económico' : 'Confort';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Categoría actualizada a $categoriaDisplay',
-              style: GoogleFonts.inter(color: Colors.white),
-            ),
-            backgroundColor: const Color(0xFF3b82f6),
-            behavior: SnackBarBehavior.floating,
+      await _dbRef.update(updates);
+
+      String categoriaDisplay = _categoriaSeleccionada == 'economico' ? 'Económico' : 'Confort';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Categoría actualizada a $categoriaDisplay',
+            style: GoogleFonts.inter(color: Colors.white),
           ),
-        );
-      }
+          backgroundColor: const Color(0xFF3b82f6),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e', style: GoogleFonts.inter(color: Colors.white)),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar categoría: $e', style: GoogleFonts.inter(color: Colors.white)),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _cargando = false);
-      }
+      setState(() => _cargando = false);
     }
   }
 

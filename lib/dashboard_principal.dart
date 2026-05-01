@@ -606,8 +606,21 @@ class _DashboardHomeState extends State<_DashboardHome> {
                           final datos = Map<String, dynamic>.from(value as Map);
                           final rol = datos['rol'] ?? '';
                           if (rol == 'conductor') {
-                            final estado =
-                                datos['estadoValidacion'] ?? 'pendiente';
+                            // Prioridad: usar estadoConductor.aprobado, fallback a estadoValidacion
+                            final estadoConductor = datos['estadoConductor'] as Map?;
+                            final aprobado = estadoConductor?['aprobado'] ?? false;
+                            final estadoValidacion = datos['estadoValidacion'] ?? 'pendiente';
+                            
+                            // Determinar estado basado en aprobado
+                            String estado;
+                            if (aprobado == true) {
+                              estado = 'aprobado';
+                            } else if (estadoValidacion == 'rechazado') {
+                              estado = 'rechazado';
+                            } else {
+                              estado = 'pendiente';
+                            }
+                            
                             if (estado == 'pendiente') {
                               conductoresPendientes++;
                             } else if (estado == 'aprobado') {
