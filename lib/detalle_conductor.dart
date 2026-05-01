@@ -132,7 +132,7 @@ class _DetalleConductorState extends State<DetalleConductor> {
         'usuarios/${widget.uid}/categoria': _categoriaSeleccionada?.toLowerCase(),
         'usuarios/${widget.uid}/estadoConductor/aprobado': nuevoEstado == 'aprobado',
         'usuarios/${widget.uid}/estadoConductor/ultimaConexion': ServerValue.timestamp,
-        ...datosPerfil.map((key, value) => 'usuarios/${widget.uid}/$key': value),
+        ...datosPerfil.map((key, value) => MapEntry('usuarios/${widget.uid}/$key', value)),
         
         // Nodo conductores
         'conductores/${widget.uid}/estadoValidacion': nuevoEstado,
@@ -465,7 +465,7 @@ class _DetalleConductorState extends State<DetalleConductor> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _cargando ? null : _guardarCategoria,
+                          onPressed: _cargando ? null : _actualizarCategoria,
                           icon: const Icon(Icons.save),
                           label: const Text('GUARDAR CATEGORÍA'),
                           style: ElevatedButton.styleFrom(
